@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-LIBRARY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            border-bottom: 2px solid #000;
+            padding: 40px 60px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: normal;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: #555;
+            margin-top: 8px;
+            font-size: 1rem;
+        }
+
+        main {
+            flex: 1;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        .upload-section {
+            border: 2px dashed #000;
+            padding: 50px 30px;
+            text-align: center;
+            margin-bottom: 60px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .upload-section:hover {
+            background: #f5f5f5;
+        }
+
+        .upload-section.dragover {
+            background: #000;
+            color: #fff;
+        }
+
+        .upload-section h2 {
+            font-size: 1.3rem;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+
+        .upload-section p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-bottom: 1px solid #eee;
+            transition: opacity 0.2s;
+        }
+
+        .file-item:hover {
+            opacity: 0.6;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            background: none;
+            border: 1px solid #000;
+            padding: 8px 20px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #000;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-delete {
+            border-color: #ccc;
+            color: #888;
+        }
+
+        .btn-delete:hover {
+            background: #000;
+            border-color: #000;
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 0;
+            color: #999;
+            font-style: italic;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 2px;
+            background: #eee;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #000;
+            transition: width 0.3s ease;
+        }
+
+        .error-msg {
+            color: #c00;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .storage-info {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 8px;
+        }
+
+        .hosted-badge {
+            background: #000;
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        footer {
+            border-top: 1px solid #ddd;
+            padding: 30px 60px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 30px 24px;
+            }
+            main {
+                padding: 40px 24px;
+            }
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .file-actions {
+                width: 100%;
+            }
+            .btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>IFT302 Lecture Notes</h1>
+        <p>Adebayo Ameerah Eniola 2023/12739</p>
+    </header>
+
+    <main>
+        <div class="upload-section" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <h2>Upload Notes</h2>
+            <p>Click to select a file or drag and drop here</p>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="storage-info" id="storageInfo"></div>
+        </div>
+        <input type="file" id="fileInput" onchange="handleFileSelect(event)">
+
+        <h2 class="section-title">Course Materials</h2>
+        <ul class="file-list" id="fileList">
+            <li class="empty-state" id="emptyState">No files uploaded yet</li>
+        </ul>
+    </main>
+
+    <footer>
+        <p>IFT302 E-Library &copy; 2026</p>
+    </footer>
+
+    <script>
+        const DB_NAME = 'LectureNotesDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'files';
+        let db = null;
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const emptyState = document.getElementById('emptyState');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const errorMsg = document.getElementById('errorMsg');
+        const storageInfo = document.getElementById('storageInfo');
+
+        const DEFAULT_FILES = [
+            {
+                id: 1001,
+                name: "Lecture 1 - Overview of WAP.pdf",
+                size: 184320,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/Lecture%201-Overview%20of%20WAP.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1002,
+                name: "REAL IFT 302 Notes.pdf",
+                size: 2097152,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/REAL%20IFT%20302%20Notes.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1003,
+                name: "XML Basics.pdf",
+                size: 307200,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/XML%20Basics.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1004,
+                name: "Introduction to MySQL.pdf",
+                size: 2621440,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/Introduction%20to%20MySQL.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1005,
+                name: "JavaScript Basics.pdf",
+                size: 153600,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/javascript1.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1006,
+                name: "jQuery Introduction.pdf",
+                size: 122880,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/1.06-jQuery-Intro.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1007,
+                name: "Building Modern Web Applications Using Angular.pdf",
+                size: 5242880,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/building-modern-web-applications-using-angular.9781785880728.73223.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            },
+            {
+                id: 1008,
+                name: "Web Development Training Notes.pdf",
+                size: 819200,
+                type: "application/pdf",
+                data: "https://raw.githubusercontent.com/ProjectsHub16/IFT302_PROJECT/main/Web%20Development%20Training%20Notes_%20Introduction%20to%20Web%20Development%20-%20DEV%20Community.pdf",
+                date: "2026-01-15T10:00:00.000Z",
+                isExternal: true
+            }
+        ];
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        function saveFileToDB(fileData) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(fileData);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getAllFiles() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deleteFileFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                processFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                processFile(e.target.files[0]);
+            }
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 4000);
+        }
+
+        async function processFile(file) {
+            errorMsg.style.display = 'none';
+            progressBar.classList.add('active');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 12;
+                progressFill.style.width = Math.min(progress, 85) + '%';
+                if (progress >= 85) clearInterval(interval);
+            }, 80);
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const fileData = {
+                    id: Date.now(),
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    data: e.target.result,
+                    date: new Date().toISOString(),
+                    isExternal: false
+                };
+
+                try {
+                    await saveFileToDB(fileData);
+                    progressFill.style.width = '100%';
+                    
+                    setTimeout(() => {
+                        progressBar.classList.remove('active');
+                        progressFill.style.width = '0%';
+                        fileInput.value = '';
+                        renderFiles();
+                    }, 300);
+                } catch (err) {
+                    clearInterval(interval);
+                    progressBar.classList.remove('active');
+                    progressFill.style.width = '0%';
+                    showError('Storage full or error saving file. Try deleting old files.');
+                }
+            };
+            
+            reader.onerror = () => {
+                clearInterval(interval);
+                progressBar.classList.remove('active');
+                showError('Error reading file.');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        async function renderFiles() {
+            let files = await getAllFiles();
+            
+            if (files.length === 0) {
+                for (const file of DEFAULT_FILES) {
+                    await saveFileToDB(file);
+                }
+                files = [...DEFAULT_FILES];
+            }
+
+            const localFiles = files.filter(f => !f.isExternal);
+            const totalSize = localFiles.reduce((sum, f) => sum + (f.size || 0), 0);
+            const externalCount = files.filter(f => f.isExternal).length;
+            const localCount = localFiles.length;
+            
+            let storageText = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+            if (localCount > 0) {
+                storageText += ` · ${formatSize(totalSize)} local storage used`;
+            }
+            if (externalCount > 0) {
+                storageText += ` · ${externalCount} hosted on GitHub`;
+            }
+            storageInfo.textContent = storageText;
+
+            if (files.length === 0) {
+                fileList.innerHTML = '';
+                fileList.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            fileList.innerHTML = '';
+
+            files.sort((a, b) => b.id - a.id).forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                
+                const date = new Date(file.date).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                });
+
+                const downloadBtn = file.isExternal 
+                    ? `<a class="btn" href="${file.data}" target="_blank" rel="noopener noreferrer">Open PDF</a>`
+                    : `<a class="btn" href="${file.data}" download="${file.name}">Download</a>`;
+
+                const externalBadge = file.isExternal 
+                    ? `<span class="hosted-badge">GitHub</span>` 
+                    : '';
+
+                li.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${escapeHtml(file.name)}${externalBadge}</div>
+                        <div class="file-meta">${formatSize(file.size)} · ${date}</div>
+                    </div>
+                    <div class="file-actions">
+                        ${downloadBtn}
+                        <button class="btn btn-delete" onclick="deleteFile(${file.id})">Delete</button>
+                    </div>
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        async function deleteFile(id) {
+            await deleteFileFromDB(id);
+            renderFiles();
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        initDB().then(() => renderFiles()).catch(err => {
+            console.error('DB init failed:', err);
+            showError('Browser storage not available.');
+        });
+    </script>
+
+</body>
+</html>
